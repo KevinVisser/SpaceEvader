@@ -17,7 +17,7 @@
         window.onload = function () {
             var camera, scene, renderer;
             var cameraControls;
-            var obstacle;
+            //var obstacle;
             var group;
 
             /**
@@ -30,16 +30,16 @@
             */
             
             function loadOBJModel(modelPath, modelName, texturePath, textureName, onload){
-                new THREE.MTLLoader()
-                    .setPath(texturePath)
-                    .load(textureName, function(materials){
+                var mtlLoader = new THREE.MTLLoader()
+                mtlLoader.setPath(texturePath)
+                mtlLoader.load(textureName, function(materials){
 
                         materials.preload();
 
-                        new THREE.OBJLoader()
-                            .setPath(modelPath)
-                            .setMaterials(materials)
-                            .load(modelName, function(object){
+                        var objLoader = new THREE.OBJLoader()
+                        objLoader.setPath(modelPath)
+                        objLoader.setMaterials(materials)
+                        objLoader.load(modelName, function(object){
                                 onload(object);
                             }, function () {} , function (e){console.log("Error loading model"); console.log(e); });
                     });
@@ -49,7 +49,7 @@
                 camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
                 cameraControls = new THREE.OrbitControls(camera);
                 camera.position.z = 10;
-                camera.position.y = -3;
+                camera.position.y = 0;
                 camera.position.x = 100;
                 cameraControls.update();
                 scene = new THREE.Scene();
@@ -60,13 +60,6 @@
                 document.body.appendChild(renderer.domElement);
 
                 window.addEventListener('resize', onWindowResize, false);
-                
-                loadOBJModel("models/Obstacles/", "Boulder.obj", "models/Obstacles/", "Boulder.mtl", (mesh) => {
-                    mesh.scale.set(1, 1, 1);
-                    //mesh.position.set(33, 0.23, 15);
-                    obstacle = mesh.clone();
-                    console.log(obstacle.position.x); 
-                })
 
                 var skyboxGeometry = new THREE.BoxGeometry(1000, 1000, 1000);
                 var skyboxMaterials = [
@@ -102,31 +95,36 @@
             }
 
             function MakeObject(){
-               
-                //console.log(obstacle.position.x);
                 group = new THREE.Group();
-                loadOBJModel("models/Obstacles/", "Boulder.obj", "models/Obstacles/", "Boulder.mtl", (obstacle) => {
-                    obstacle.scale.set(1, 1, 1);                    
-                    for(var i = 0; i < 200; i++){
-                        obstacle.position.set(Math.random() * -200, Math.random() * 10, Math.random() * 10);
-                        group.add(obstacle);    
-                    }
-                    for(var i = 0; i < 200; i++){
-                        obstacle.position.set(Math.random() * -200, Math.random() * 10, Math.random() * 10);
-                        group.add(obstacle);    
-                    }
-                    for(var i = 0; i < 200; i++){
-                        obstacle.position.set(Math.random() * -200, Math.random() * 10, Math.random() * 10);
-                        group.add(obstacle);    
-                    }
-                    scene.add(group);
-                })
+
+                //Het laden van het object en de materials(textures)
+                var mtlLoader = new THREE.MTLLoader();
+                mtlLoader.setTexturePath("models/Obstacles/");
+                mtlLoader.setPath("models/Obstacles/");
+                mtlLoader.load("Boulder.mtl", function(materials){
+                    materials.preload();
+
+                    var objLoader = new THREE.OBJLoader()
+                    objLoader.setMaterials(materials)
+                    objLoader.setPath("models/Obstacles/")
+                    objLoader.load("Boulder.obj", function(geometry){
+                        //hier kunnen we later wel aanpassen hoeveel objecten er zijn(moeilijksheidgraad)
+                        for(var i = 0; i < 250; i++){
+                            var obstacle = geometry.clone();
+                            obstacle.position.set(Math.random() * -200, Math.random() * 10, Math.random() * 10);
+                            obstacle.scale.set(1, 1, 1);                    
+                            group.add(obstacle);    
+                        }
+                    });
+                });
+
+                scene.add(group);
             }
 
             function animate() {
                 requestAnimationFrame(animate);
                 cameraControls.update();
-                group.position.x += 0.3;
+                group.position.x += 0.5;
                 if (group.position.x > 300){
                     scene.remove(group);
                     MakeObject();
